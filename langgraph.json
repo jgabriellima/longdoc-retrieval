@@ -1,0 +1,12 @@
+{
+  "dependencies": [
+    ".",
+    "langchain-anthropic==1.7.1",
+    "langchain-openai==1.6.1"
+  ],
+  "graphs": {
+    "retrieval_agent": "./src/longdoc_retrieval/graph/dev.py:make_graph"
+  },
+  "env": ".env",
+  "python_version": "3.11"
+}
