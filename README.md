@@ -76,12 +76,21 @@ document before it's accepted as evidence.
 ```bash
 pip install -e ".[agent]"          # deterministic layer + the LangGraph loop
 cp .env.example .env               # add ANTHROPIC_API_KEY or OPENAI_API_KEY
-python main.py                     # ingest a sample contract, ask it a question
+longdoc ingest path/to/file.txt    # persist into ./.longdoc/index.db
+longdoc ask "what is the contract value?"
 ```
 
 ```bash
-python main.py --document path/to/file.txt --question "..."
+longdoc ask path/to/file.txt "what is the contract value?"   # ingest-if-needed
+longdoc outline
+longdoc search "termination"
+longdoc find-exact "Art. 37"
+longdoc --json ask "what is the contract value?"
 ```
+
+`python -m longdoc_retrieval` is the same entry as `longdoc`. Override the
+index with `--db PATH` or `LONGDOC_DB`. `ask` requires the `[agent]` extra
+and an API key; the other commands do not.
 
 `RetrievalConfig.from_env()` picks Anthropic (Claude Sonnet 5 for
 planning/sufficiency, Claude Haiku 4.5 for candidate evaluation) if
@@ -96,6 +105,8 @@ src/longdoc_retrieval/
 ├── indexes/      # SQLite storage (structural tree + FTS5) and the Tantivy alternative
 ├── retrieval/    # search(), find_exact(), read_node()/read_range()
 ├── api/          # RetrievalService - the 7-method facade over the above
+├── app/          # process helpers: db path, ingest-if-needed, document resolution
+├── cli/          # `longdoc` / `python -m longdoc_retrieval`
 ├── graph/        # the LangGraph agentic loop: planner, search, fusion,
 │                 # evaluator, reader, sufficiency, budgets, router
 └── config.py     # RetrievalConfig - every loop budget and per-component model name
@@ -153,8 +164,8 @@ is a config choice, not an architectural one.
 
 ```bash
 pip install -e ".[dev,agent,tantivy]"
-pytest tests -q       # unit + integration, no network calls (fake LLM double)
-ruff check src tests main.py
+pytest tests -q       # unit + CLI, no network calls (injected ask runner)
+ruff check src tests
 mypy src
 ```
 
@@ -165,7 +176,5 @@ with a scripted fake LLM, so evidence traceability, loop termination, and
 routing/stop-reason agreement are checked against real document offsets
 without spending on a real API call.
 
-`main.py` is the one script that makes real LLM calls - useful for a manual
-sanity check of planner/evaluator/sufficiency prompts against real-world
-behavior before relying on them further, but it is not part of the
-automated suite.
+`longdoc ask` is the command that makes real LLM calls. Tests inject a fake
+runner so the automated suite never hits a provider.

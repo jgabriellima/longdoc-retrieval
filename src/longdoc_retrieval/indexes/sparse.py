@@ -23,6 +23,16 @@ def create_schema(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+def delete_document(conn: sqlite3.Connection, document_id: str) -> None:
+    rows = conn.execute(
+        "SELECT rowid FROM retrieval_units_fts WHERE document_id = ?",
+        (document_id,),
+    ).fetchall()
+    for row in rows:
+        conn.execute("DELETE FROM retrieval_units_fts WHERE rowid = ?", (row["rowid"],))
+    conn.commit()
+
+
 def index_units(conn: sqlite3.Connection, document_text: str, units: list[RetrievalUnit]) -> None:
     # rowid is left to SQLite's default auto-assignment: rows are matched
     # back to `retrieval_units` by the unit_id column (see search()'s JOIN),

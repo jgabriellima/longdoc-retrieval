@@ -79,12 +79,21 @@ aceita como evidência.
 ```bash
 pip install -e ".[agent]"          # camada determinística + o loop LangGraph
 cp .env.example .env               # adicionar ANTHROPIC_API_KEY ou OPENAI_API_KEY
-python main.py                     # ingerir um contrato de exemplo, fazer uma pergunta
+longdoc ingest path/to/file.txt    # persiste em ./.longdoc/index.db
+longdoc ask "qual o valor do contrato?"
 ```
 
 ```bash
-python main.py --document path/to/file.txt --question "..."
+longdoc ask path/to/file.txt "qual o valor do contrato?"   # ingere se faltar
+longdoc outline
+longdoc search "rescisão"
+longdoc find-exact "Art. 37"
+longdoc --json ask "qual o valor do contrato?"
 ```
+
+`python -m longdoc_retrieval` é a mesma entrada que `longdoc`. Troque o
+índice com `--db PATH` ou `LONGDOC_DB`. `ask` exige o extra `[agent]` e
+uma chave de API; os outros comandos não.
 
 `RetrievalConfig.from_env()` escolhe Anthropic (Claude Sonnet 5 para
 planejamento/suficiência, Claude Haiku 4.5 para avaliação de candidatos)
@@ -100,6 +109,8 @@ src/longdoc_retrieval/
 ├── indexes/      # armazenamento SQLite (árvore estrutural + FTS5) e a alternativa Tantivy
 ├── retrieval/    # search(), find_exact(), read_node()/read_range()
 ├── api/          # RetrievalService - a fachada de 7 métodos sobre o restante
+├── app/          # helpers de processo: caminho do banco, ingest-if-needed
+├── cli/          # `longdoc` / `python -m longdoc_retrieval`
 ├── graph/        # o loop agentico LangGraph: planner, search, fusion,
 │                 # evaluator, reader, sufficiency, budgets, router
 └── config.py     # RetrievalConfig - todo orçamento do loop e o nome de modelo por componente
@@ -160,8 +171,8 @@ qual é o "padrão" é uma escolha de configuração, não arquitetural.
 
 ```bash
 pip install -e ".[dev,agent,tantivy]"
-pytest tests -q       # unit + integration, sem chamadas de rede (dublê fake de LLM)
-ruff check src tests main.py
+pytest tests -q       # unit + CLI, sem chamadas de rede (runner de ask injetado)
+ruff check src tests
 mypy src
 ```
 
@@ -174,7 +185,5 @@ término do loop e concordância roteamento/motivo-de-parada são checados
 contra offsets reais do documento, sem gastar uma chamada de API de
 verdade.
 
-`main.py` é o único script que faz chamadas reais de LLM — útil para um
-sanity check manual dos prompts de planner/evaluator/sufficiency contra
-comportamento do mundo real antes de confiar neles adiante, mas não faz
-parte da suíte automatizada.
+`longdoc ask` é o comando que faz chamadas reais de LLM. Os testes injetam
+um runner fake, então a suíte automatizada nunca bate em um provedor.
