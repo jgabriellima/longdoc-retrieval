@@ -1,9 +1,6 @@
-"""read_node() / read_range() - no retrieval operation may silently
-truncate evidence. If a requested range exceeds a token/char budget, return
-the text that fits plus explicit continuation metadata instead of raising
-or silently cutting it off.
 """
-
+Reader for the retrieval API.
+"""
 import re
 import sqlite3
 
@@ -12,8 +9,6 @@ from pydantic import BaseModel
 from longdoc_retrieval.indexes.structural import get_document_content, get_node
 from longdoc_retrieval.tokenize import approx_token_count
 
-# Hard ceiling on read_range to prevent an accidental full-document dump -
-# callers must ask for a bounded range, not the whole document by default.
 MAX_RANGE_CHARS = 50_000
 
 _SENTENCE_BOUNDARY_RE = re.compile(r"[.!?]\s+")
@@ -28,11 +23,6 @@ class ReadResult(BaseModel):
 
 
 def _cut_at_token_limit(content: str, start: int, end: int, token_limit: int) -> int:
-    """Returns the offset (<= end) where `content[start:offset]` first
-    reaches ~token_limit tokens, preferring the nearest preceding sentence
-    boundary over a hard token cut.
-    """
-
     window = content[start:end]
     pos = None
     for tokens, token_match in enumerate(re.finditer(r"\w+|[^\w\s]", window), start=1):

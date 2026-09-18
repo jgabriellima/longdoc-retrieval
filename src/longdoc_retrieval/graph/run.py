@@ -1,7 +1,6 @@
-"""Top-level entry point: question -> EvidencePackage. Builds the compiled
-graph and runs it to completion for a single (document_id, question) pair.
 """
-
+Runner for the retrieval graph.
+"""
 import uuid
 
 from langgraph.checkpoint.memory import MemorySaver

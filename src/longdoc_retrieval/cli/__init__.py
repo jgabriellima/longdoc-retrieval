@@ -1,5 +1,3 @@
-"""Console entry: parse argv, print, map errors to exit codes."""
-
 from __future__ import annotations
 
 import argparse

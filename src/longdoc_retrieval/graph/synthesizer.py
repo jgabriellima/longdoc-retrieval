@@ -1,19 +1,6 @@
-"""synthesize_answer node: the graph's final step, turning the already-read
-`evidence` into the actual answer to `question`.
-
-Everything upstream (`evaluate_sufficiency`) verifies that some evidence
-item's text, copied literally, answers the question - that guarantee is
-about extraction, not prose. This node is the one place that writes actual
-prose, so it carries its own, weaker but still code-enforced anti-
-fabrication rule: it only ever runs over `evidence` already in state (never
-rereads the document), and every `answer_citations` entry is checked
-against real `evidence_id`s afterwards - a citation the model invents for
-an item that isn't there is dropped, not trusted. No evidence at all means
-nothing to synthesize from, so `answer` stays `None` rather than the model
-inventing one from the question alone; a failed structured-output call
-degrades the same way, for the same reason.
 """
-
+Synthesizer module for the retrieval graph.
+"""
 from typing import Any
 
 from pydantic import BaseModel, Field

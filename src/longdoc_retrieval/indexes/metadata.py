@@ -1,10 +1,6 @@
-"""Thin accessor over documents.metadata (the DocumentMetadata JSON blob).
-
-Kept separate from structural.py's node/document storage so callers that
-only care about metadata (e.g. an authorization check on `source`) don't
-need to import the structural-tree query surface.
 """
-
+Metadata for the retrieval indexes.
+"""
 import sqlite3
 
 from longdoc_retrieval.domain.document import DocumentMetadata

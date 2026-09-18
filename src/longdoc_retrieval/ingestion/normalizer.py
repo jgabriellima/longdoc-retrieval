@@ -1,13 +1,6 @@
-"""Minimal, deterministic text normalization.
-
-Only CRLF/CR -> LF and BOM stripping. Nothing else - no whitespace
-collapsing, no trimming of interior content. Offsets are canonical: every
-offset produced anywhere downstream is relative to this normalized text,
-and it must be possible to round-trip `content[start_offset:end_offset]`
-reliably, which rules out any normalization step that isn't a
-straightforward character substitution.
 """
-
+Normalizer for the retrieval API.
+"""
 _BOM = "﻿"
 
 
