@@ -25,6 +25,7 @@ agent = [
     "langgraph-sdk==0.4.4",
     "langchain-anthropic==1.7.1",
     "langchain-openai==1.6.1",
+    "python-dotenv>=1.0,<2",
 ]
 dev = [
     "pytest>=8.3,<9",
@@ -52,6 +53,9 @@ langgraph-cli = [
 tantivy = [
     "tantivy==0.26.0",
 ]
+
+[project.scripts]
+longdoc = "longdoc_retrieval.cli:entrypoint"
 
 [build-system]
 requires = ["setuptools>=68"]

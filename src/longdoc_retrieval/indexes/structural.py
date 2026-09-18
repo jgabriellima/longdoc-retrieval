@@ -7,6 +7,7 @@ have already authorized `document_id` before calling in.
 
 import json
 import sqlite3
+from dataclasses import dataclass
 
 from longdoc_retrieval.domain.document import Document, DocumentMetadata
 from longdoc_retrieval.domain.node import DocumentNode
@@ -246,5 +247,47 @@ def count_units_for_node(conn: sqlite3.Connection, document_id: str, node_id: st
         (document_id, node_id),
     ).fetchone()
     return row["n"] if row else 0
+
+
+@dataclass(frozen=True)
+class StoredDocument:
+    document_id: str
+    source: str | None
+    token_count: int
+
+
+def document_exists(conn: sqlite3.Connection, document_id: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM documents WHERE document_id = ?", (document_id,)
+    ).fetchone()
+    return row is not None
+
+
+def list_documents(conn: sqlite3.Connection) -> list[StoredDocument]:
+    rows = conn.execute(
+        "SELECT document_id, metadata FROM documents ORDER BY document_id"
+    ).fetchall()
+    documents: list[StoredDocument] = []
+    for row in rows:
+        metadata = DocumentMetadata.model_validate_json(row["metadata"])
+        root = conn.execute(
+            "SELECT token_count FROM nodes WHERE document_id = ? AND parent_id IS NULL",
+            (row["document_id"],),
+        ).fetchone()
+        documents.append(
+            StoredDocument(
+                document_id=row["document_id"],
+                source=metadata.source,
+                token_count=int(root["token_count"]) if root else 0,
+            )
+        )
+    return documents
+
+
+def delete_document(conn: sqlite3.Connection, document_id: str) -> None:
+    conn.execute("DELETE FROM retrieval_units WHERE document_id = ?", (document_id,))
+    conn.execute("DELETE FROM nodes WHERE document_id = ?", (document_id,))
+    conn.execute("DELETE FROM documents WHERE document_id = ?", (document_id,))
+    conn.commit()
 
 

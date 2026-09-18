@@ -11,16 +11,24 @@ authorized, by this layer - callers must have already checked access.
 
 import sqlite3
 
-from longdoc_retrieval.api.schemas import DocumentOutline, NodeSummary, OutlineNode
+from longdoc_retrieval.api.schemas import DocumentOutline, DocumentRecord, NodeSummary, OutlineNode
 from longdoc_retrieval.domain.document import Document, DocumentMetadata
 from longdoc_retrieval.domain.retrieval import RetrievalCandidate
+from longdoc_retrieval.indexes import sparse as sparse_index
 from longdoc_retrieval.indexes.structural import (
     count_units_for_node,
+    document_exists,
     get_children,
     get_document_metadata,
     get_node,
     get_root,
     get_top_level_ancestor,
+)
+from longdoc_retrieval.indexes.structural import (
+    delete_document as delete_stored_document,
+)
+from longdoc_retrieval.indexes.structural import (
+    list_documents as list_stored_documents,
 )
 from longdoc_retrieval.ingestion.indexer import ingest_document
 from longdoc_retrieval.retrieval.exact import find_exact as _find_exact
@@ -39,6 +47,28 @@ class RetrievalService:
 
     def ingest(self, document: Document) -> None:
         ingest_document(self._conn, document, self._sparse)
+
+    def has_document(self, document_id: str) -> bool:
+        return document_exists(self._conn, document_id)
+
+    def list_documents(self) -> list[DocumentRecord]:
+        return [
+            DocumentRecord(
+                document_id=item.document_id,
+                source=item.source,
+                token_count=item.token_count,
+            )
+            for item in list_stored_documents(self._conn)
+        ]
+
+    def list_document_ids(self) -> list[str]:
+        return [item.document_id for item in list_stored_documents(self._conn)]
+
+    def delete_document(self, document_id: str) -> None:
+        if not document_exists(self._conn, document_id):
+            raise KeyError(f"document not found: {document_id}")
+        sparse_index.delete_document(self._conn, document_id)
+        delete_stored_document(self._conn, document_id)
 
     async def get_metadata(self, document_id: str) -> DocumentMetadata:
         return get_document_metadata(self._conn, document_id)

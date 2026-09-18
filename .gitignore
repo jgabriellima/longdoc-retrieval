@@ -9,5 +9,6 @@ __pycache__/
 .DS_Store
 .env
 .langgraph_api/
+.longdoc/
 
 docs/

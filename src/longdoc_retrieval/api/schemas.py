@@ -8,7 +8,13 @@ from pydantic import BaseModel
 
 from longdoc_retrieval.retrieval.reader import ReadResult
 
-__all__ = ["DocumentOutline", "NodeSummary", "OutlineNode", "ReadResult"]
+__all__ = ["DocumentOutline", "DocumentRecord", "NodeSummary", "OutlineNode", "ReadResult"]
+
+
+class DocumentRecord(BaseModel):
+    document_id: str
+    source: str | None = None
+    token_count: int
 
 
 class OutlineNode(BaseModel):
