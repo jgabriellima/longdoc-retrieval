@@ -1,3 +1,6 @@
+"""
+Structure parser for the retrieval API.
+"""
 import re
 from dataclasses import dataclass, field
 

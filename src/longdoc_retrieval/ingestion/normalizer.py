@@ -1,3 +1,6 @@
+"""
+Normalizer for the retrieval API.
+"""
 _BOM = "﻿"
 
 

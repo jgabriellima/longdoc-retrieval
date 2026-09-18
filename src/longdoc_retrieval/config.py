@@ -1,3 +1,6 @@
+"""
+Configuration for the retrieval API.
+"""
 import os
 
 from pydantic import BaseModel

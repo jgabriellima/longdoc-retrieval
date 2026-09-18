@@ -1,3 +1,6 @@
+"""
+Metadata for the retrieval indexes.
+"""
 import sqlite3
 
 from longdoc_retrieval.domain.document import DocumentMetadata

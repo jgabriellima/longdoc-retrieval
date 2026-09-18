@@ -1,3 +1,6 @@
+"""
+Fusion module for the retrieval graph.
+"""
 from collections import defaultdict
 from typing import Any
 

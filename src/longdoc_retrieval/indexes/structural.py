@@ -1,3 +1,6 @@
+"""
+Structural index for the retrieval API.
+"""
 import json
 import sqlite3
 from dataclasses import dataclass

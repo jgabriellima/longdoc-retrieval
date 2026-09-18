@@ -1,3 +1,6 @@
+"""
+Reader for the retrieval API.
+"""
 import re
 import sqlite3
 

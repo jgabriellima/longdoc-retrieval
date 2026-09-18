@@ -1,3 +1,6 @@
+"""
+Synthesizer module for the retrieval graph.
+"""
 from typing import Any
 
 from pydantic import BaseModel, Field

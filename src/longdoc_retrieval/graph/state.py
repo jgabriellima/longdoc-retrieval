@@ -1,3 +1,6 @@
+"""
+State for the retrieval graph.
+"""
 from typing import Any, TypedDict
 
 from pydantic import BaseModel

@@ -1,3 +1,6 @@
+"""
+Metrics domain model.
+"""
 from pydantic import BaseModel
 
 

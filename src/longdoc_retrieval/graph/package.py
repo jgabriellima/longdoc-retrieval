@@ -1,3 +1,6 @@
+"""
+Package module for the retrieval graph.
+"""
 import time
 from typing import Any, Literal
 

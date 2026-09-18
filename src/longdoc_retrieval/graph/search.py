@@ -1,3 +1,6 @@
+"""
+Search module for the retrieval graph.
+"""
 import asyncio
 import time
 from typing import Any

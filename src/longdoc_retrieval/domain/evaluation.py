@@ -1,3 +1,6 @@
+"""
+Evaluation domain model.
+"""
 from typing import Literal
 
 from pydantic import BaseModel

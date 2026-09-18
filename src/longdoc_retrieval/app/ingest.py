@@ -1,3 +1,6 @@
+"""
+Ingest module for the retrieval API.
+"""
 from dataclasses import dataclass
 from pathlib import Path
 

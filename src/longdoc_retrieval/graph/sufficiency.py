@@ -1,3 +1,6 @@
+"""
+Sufficiency module for the retrieval graph.
+"""
 import asyncio
 from typing import Any
 

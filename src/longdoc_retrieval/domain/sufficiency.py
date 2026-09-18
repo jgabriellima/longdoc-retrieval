@@ -1,3 +1,6 @@
+"""
+Sufficiency domain model.
+"""
 from pydantic import BaseModel, Field
 
 

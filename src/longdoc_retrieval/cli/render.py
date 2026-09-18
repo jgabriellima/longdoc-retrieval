@@ -1,3 +1,6 @@
+"""
+Render module for the retrieval CLI.
+"""
 import json
 import sys
 from collections.abc import Sequence

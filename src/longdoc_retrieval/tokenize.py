@@ -1,3 +1,6 @@
+"""
+Tokenizer for the retrieval API.
+"""
 import re
 
 _TOKEN_PATTERN = re.compile(r"\w+|[^\w\s]", re.UNICODE)

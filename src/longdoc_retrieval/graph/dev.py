@@ -1,3 +1,6 @@
+"""
+Development graph for the retrieval API.
+"""
 from pathlib import Path
 
 from langgraph.graph.state import CompiledStateGraph

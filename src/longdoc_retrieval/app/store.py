@@ -1,3 +1,6 @@
+"""
+Store module for the retrieval API.
+"""
 import os
 from collections.abc import Mapping
 from pathlib import Path

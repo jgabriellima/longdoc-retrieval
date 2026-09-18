@@ -1,3 +1,6 @@
+"""
+Sparse index for the retrieval API.
+"""
 import sqlite3
 
 from longdoc_retrieval.ingestion.node_builder import RetrievalUnit

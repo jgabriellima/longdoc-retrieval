@@ -1,3 +1,6 @@
+"""
+Retrieval plan domain model.
+"""
 from pydantic import BaseModel, Field
 
 

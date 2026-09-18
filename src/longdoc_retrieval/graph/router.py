@@ -1,3 +1,6 @@
+"""
+Router for the retrieval graph.
+"""
 from typing import Literal
 
 from longdoc_retrieval.graph.state import RetrievalState

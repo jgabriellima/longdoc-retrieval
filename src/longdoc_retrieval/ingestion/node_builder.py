@@ -1,3 +1,6 @@
+"""
+Node builder for the retrieval API.
+"""
 import re
 
 from pydantic import BaseModel

@@ -1,3 +1,6 @@
+"""
+Indexer for the retrieval API.
+"""
 import sqlite3
 from typing import TYPE_CHECKING
 

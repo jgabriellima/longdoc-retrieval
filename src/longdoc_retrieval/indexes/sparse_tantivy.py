@@ -1,3 +1,6 @@
+"""
+Sparse index for the retrieval API.
+"""
 import re
 
 import tantivy

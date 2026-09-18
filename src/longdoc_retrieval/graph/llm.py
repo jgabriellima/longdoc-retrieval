@@ -1,3 +1,6 @@
+"""
+LLM module for the retrieval graph.
+"""
 from dataclasses import dataclass
 from typing import Any, Generic, Protocol, TypeVar, cast
 

@@ -1,3 +1,6 @@
+"""
+Budgets for the retrieval graph.
+"""
 import time
 
 from longdoc_retrieval.config import RetrievalConfig

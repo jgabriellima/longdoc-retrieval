@@ -1,3 +1,6 @@
+"""
+Candidate ID for the retrieval API.
+"""
 import hashlib
 
 

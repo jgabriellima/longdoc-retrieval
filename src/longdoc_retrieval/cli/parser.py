@@ -1,3 +1,6 @@
+"""
+Parser for the retrieval CLI.
+"""
 import argparse
 
 
