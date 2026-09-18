@@ -1,13 +1,15 @@
-"""Single connection factory composing the structural + sparse (FTS5) schemas."""
-
+"""
+Database for the retrieval indexes.
+"""
 import sqlite3
 
-from longdoc_retrieval.indexes import sparse, structural
+from longdoc_retrieval.indexes.sparse import create_schema as create_sparse_schema
+from longdoc_retrieval.indexes.structural import create_schema as create_structural_schema
 
 
 def connect(path: str = ":memory:") -> sqlite3.Connection:
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
-    structural.create_schema(conn)
-    sparse.create_schema(conn)
+    create_structural_schema(conn)
+    create_sparse_schema(conn)
     return conn

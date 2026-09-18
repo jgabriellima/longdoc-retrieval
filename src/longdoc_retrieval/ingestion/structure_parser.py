@@ -1,29 +1,6 @@
-"""Deterministic structural boundary detection: turns a document's raw text
-into a tree of headings and the content under them, with no LLM call.
-
-Design:
-
-1. Split the normalized document into blank-line-delimited paragraphs first,
-   preserving offsets. Only a paragraph that is a *single line* and <=100
-   chars is ever considered a heading candidate - this alone prevents a
-   multi-sentence paragraph (even one that happens to start with a number or
-   be in caps) from being misdetected as a heading.
-2. Classify each heading candidate, first-match-wins: Markdown ATX -> keyword
-   sections (ARTICLE/SECTION/EXHIBIT/...) -> numbered sections (gated by a
-   sentence-starter stoplist) -> short ALL-CAPS lines -> otherwise it's body.
-3. Build a tree from the detected headings via a depth-stack; every
-   non-leaf's children are made to *tile* its span exactly (no gaps) by
-   inserting anonymous body segments for text not covered by a child heading
-   (e.g. a preamble before the first heading). This guarantees retrieval-unit
-   chunking (node_builder.py), which only operates on leaves, never misses
-   document content.
-4. If a leaf ends up with no detected internal headings and its own text
-   exceeds BLOCK_FALLBACK_THRESHOLD tokens, it is further split into
-   synthetic "Bloco N" children (normalized block-size fallback), so very
-   large unstructured documents still get a coarser navigable layer above
-   raw paragraphs.
 """
-
+Structure parser for the retrieval API.
+"""
 import re
 from dataclasses import dataclass, field
 
@@ -35,9 +12,6 @@ BLOCK_TARGET_TOKENS = 2500
 _BLANK_LINE_RE = re.compile(r"\n[ \t]*\n+")
 
 _ATX_RE = re.compile(r"^(#{1,6})\s+(.+)$")
-# Bilingual EN/PT-BR keyword headings: Brazilian legal/administrative
-# documents commonly use ARTIGO/SEÇÃO/CAPÍTULO instead of (or alongside)
-# their English equivalents, so this can't be English-only.
 _KEYWORD_SECTION_RE = re.compile(
     r"^(ARTICLE|SECTION|ARTIGO|SE[ÇC][ÃA]O|CAP[ÍI]TULO)\s+([IVXLCDM]+|\d+)\b[.:]?\s*(.*)$",
     re.IGNORECASE,
@@ -46,14 +20,6 @@ _KEYWORD_ANNEX_RE = re.compile(
     r"^(EXHIBIT|SCHEDULE|ANNEX|APPENDIX|ANEXO|AP[ÊE]NDICE)\s+\w+", re.IGNORECASE
 )
 _NUMBERED_RE = re.compile(r"^(\d+(?:\.\d+)*)[.)]\s*(.*)$")
-# Reject a numbered/all-caps remainder that embeds more than one sentence
-# (a real heading is a single short phrase, e.g. "1.1 Preco e Forma de
-# Pagamento" / "1. Definitions"; a body sentence that happens to start with a
-# number, e.g. "13.2 Time. Time is of the essence...", contains a
-# terminator followed by more text). This is a structural signal, not a
-# word-list, so it works the same in PT-BR and EN - a hardcoded English
-# stop-word list (e.g. "The", "This", "Any") would be useless against the
-# Portuguese-language input this system primarily targets.
 _EMBEDDED_SENTENCE_RE = re.compile(r"[.!?]\s+\S")
 
 _HEADING_CANDIDATE_MAX_LEN = 100
@@ -112,8 +78,6 @@ def split_paragraphs(text: str) -> list[Paragraph]:
 
 
 def _classify_heading(line: str) -> tuple[int, str] | None:
-    """Returns (depth, title) if `line` is a heading, else None."""
-
     m = _ATX_RE.match(line)
     if m:
         return len(m.group(1)), m.group(2).strip()
@@ -160,7 +124,6 @@ def _build_heading_tree(
     if not headings:
         return root
 
-    # stack of (depth, node); root is depth 0
     stack: list[ParsedNode] = [root]
 
     for idx, (depth, title, para) in enumerate(headings):
@@ -176,20 +139,7 @@ def _build_heading_tree(
         stack[-1].children.append(node)
         stack.append(node)
 
-    # Each node's end_offset above is only "the next heading anywhere in
-    # document order", regardless of depth - correct for a node that turns
-    # out to be a leaf, but wrong for one that gets deeper children (the
-    # normal case: a heading immediately followed by its own subsection).
-    # There, end_offset is left truncated to that first child's start,
-    # understating the node's true span. Fix bottom-up, extending every
-    # node with children out to its last child's (already-fixed) end -
-    # otherwise the *next* tiling pass up the tree sees the node's
-    # (still-nested) real content as an uncovered gap and inserts a
-    # synthetic filler that duplicates it.
     _fix_parent_ends(root)
-
-    # Tile each parent's span: fill gaps not covered by children with
-    # anonymous body segments, so leaves collectively cover 100% of the doc.
     _tile_children(root)
     return root
 

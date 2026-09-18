@@ -1,3 +1,6 @@
+"""
+Ask module for the retrieval API.
+"""
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 

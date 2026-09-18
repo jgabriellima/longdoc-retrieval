@@ -1,10 +1,6 @@
-"""build_evidence_package node. If evidence ended up empty, status is
-"insufficient" with `missing_information` from the last SufficiencyDecision
-- never fabricated: retrieval failure is a valid result, and evidence only
-ever comes from reader.py actually reading a node, so there's nothing to
-fabricate here by construction.
 """
-
+Package module for the retrieval graph.
+"""
 import time
 from typing import Any, Literal
 

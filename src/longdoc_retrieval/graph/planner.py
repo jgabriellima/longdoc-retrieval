@@ -1,11 +1,6 @@
-"""understand_request + plan_retrieval nodes.
-
-Node functions are built by factory functions that close over their runtime
-dependencies (RetrievalService, an LLM client, RetrievalConfig) - these
-aren't part of RetrievalState (they're not serializable data, and state
-should hold structured/raw data, not orchestration plumbing).
 """
-
+Planner module for the retrieval graph.
+"""
 import time
 from typing import Any
 
@@ -110,11 +105,6 @@ def plan_retrieval_node(llm: StructuredLLM, config: RetrievalConfig) -> Node:
                 }
             )
         except StructuredOutputError:
-            # Conservative fallback - invalid output must not propagate
-            # downstream: an empty plan means execute_searches simply finds
-            # nothing this iteration, and evaluate_sufficiency will
-            # correctly report missing information rather than the graph
-            # crashing or fabricating a plan.
             plan = RetrievalPlan(objective=state["question"], queries=[])
             metrics = metrics.model_copy(update={"llm_calls": metrics.llm_calls + 1})
 

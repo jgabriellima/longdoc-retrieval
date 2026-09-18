@@ -1,3 +1,6 @@
+"""
+Development graph for the retrieval API.
+"""
 from pathlib import Path
 
 from langgraph.graph.state import CompiledStateGraph
@@ -13,9 +16,6 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 EXAMPLE_CORPUS_DIR = REPO_ROOT / "examples/legalbench_rag/corpus"
 LOCAL_DOCS_DIR = REPO_ROOT / "docs/evaluation"
 
-# document_id -> filename under docs/evaluation/, matching the IDs already
-# used by eval-data/ traces and the client report, so a question can be
-# asked against the same document under the same identifier shown there.
 LOCAL_DOCUMENTS = {
     "convenio_169_2022": "TERMO_CONVENIO_169-2022_OCR.md",
 }

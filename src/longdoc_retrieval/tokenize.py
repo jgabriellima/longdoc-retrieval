@@ -1,13 +1,6 @@
-"""Dependency-free approximate tokenizer.
-
-Deliberately not tiktoken or any model-specific BPE tokenizer: the
-retrieval layer must not be coupled to a specific LLM vendor's vocabulary,
-and the 150-400 token/unit chunking target has enough tolerance that a
-regex approximation is sufficient. Every `token_count` field in this
-codebase (DocumentNode, RetrievalCandidate, chunk sizing) uses this same
-approximation consistently.
 """
-
+Tokenizer for the retrieval API.
+"""
 import re
 
 _TOKEN_PATTERN = re.compile(r"\w+|[^\w\s]", re.UNICODE)

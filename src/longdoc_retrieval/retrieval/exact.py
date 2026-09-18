@@ -1,18 +1,6 @@
-"""find_exact() - exact/identifier search, separate from lexical ranking
-(retrieval_method="exact", lexical_score=None: an identifier either matches
-or it doesn't, there's no relevance score to attach to it).
-
-Implementation: a direct, case-insensitive, whitespace-flexible regex scan
-of `expression` over the full document text - O(document_size), which is
-fine at the scale this targets (contracts/reports, not web-scale corpora;
-indexing identifiers instead of scanning for them is a future optimization
-if that changes). This one mechanism handles identifiers of very different
-shapes (contract numbers, "Art. 37", statute references, currency amounts,
-tax IDs, dates, company names) - none of those need a different matching
-strategy, only that whitespace/case variance in how the expression was
-typed doesn't cause a miss against how it appears in the document.
 """
-
+Exact retrieval for the retrieval API.
+"""
 import re
 import sqlite3
 

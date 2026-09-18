@@ -1,11 +1,6 @@
-"""read_evidence + update_evidence_ledger nodes. Only should_read=True
-candidates get expanded ("search is cheap, reading consumes context") via
-RetrievalService.read_range (reusing the deterministic layer's
-continuation-metadata behavior). evidence_id is deterministic from
-(document_id, node_id, offsets) so re-reading the same range in a later
-iteration can never duplicate a ledger entry.
 """
-
+Reader module for the retrieval graph.
+"""
 import asyncio
 from typing import Any
 
@@ -21,37 +16,11 @@ def make_evidence_id(document_id: str, node_id: str, start_offset: int, end_offs
     return f"ev:{document_id}:{node_id}:{start_offset}:{end_offset}"
 
 
-# Max character gap between two evidence spans to treat them as one
-# continuous passage worth merging (the same "combine overlapping ranges"
-# idea candidate fusion applies, applied here to the Evidence Ledger).
-# Observed real case: a clause split by the 2000-token retrieval-unit cap
-# right at a page-break marker had a 2-character gap between the two
-# halves ("...para" | 2 chars | "dirimir litígios...").
 _ADJACENCY_GAP_CHARS = 12
-
-# Characters that plausibly end a complete sentence/clause/paragraph.
 _SENTENCE_END_CHARS = ".!?:;\"')"
 
 
 def _is_artificial_cut(preceding_text: str) -> bool:
-    """True only when `preceding_text` looks like it was sliced mid-clause
-    (no terminal punctuation) rather than ending at a natural sentence or
-    paragraph boundary.
-
-    This check is the actual gate on merging - NOT mere adjacency.
-    Retrieval units tile the whole document contiguously, so any two
-    retrieval units that both get marked should_read=True are almost
-    always "adjacent" by offset alone, even when they are two complete,
-    independently-relevant units with no relationship to each other. An
-    earlier version of this merge only checked the character gap, which
-    glued unrelated neighboring units into single evidence items of
-    15-30K+ characters on a real document (confirmed: only 7 retrieval
-    units existed for a ~45K-char file, several thousand chars each - the
-    merge was combining whole neighboring units, not stitching a genuine
-    mid-sentence split). Gating on "does the text end cleanly" restricts
-    merging back to the narrow case it was built for.
-    """
-
     stripped = preceding_text.rstrip()
     return bool(stripped) and stripped[-1] not in _SENTENCE_END_CHARS
 
@@ -160,11 +129,6 @@ def update_evidence_ledger_node(service: RetrievalService, config: RetrievalConf
             if adjacent is not None:
                 combined = await _merge_evidence(service, document_id, adjacent, evidence)
                 if combined.evidence_id != adjacent.evidence_id and combined.evidence_id in existing_ids:
-                    # Merging converged to a span some other ledger entry
-                    # already covers exactly (can happen once merge chains
-                    # from different starting points meet, e.g. on a small
-                    # document) - drop this one rather than inserting a
-                    # second entry with a duplicate evidence_id.
                     continue
                 idx = merged.index(adjacent)
                 total_tokens += combined.token_count - adjacent.token_count
