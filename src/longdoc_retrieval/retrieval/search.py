@@ -1,9 +1,3 @@
-"""search() - the SparseRetriever Protocol implemented against the SQLite
-FTS5 index. The Protocol exists so the engine underneath (SQLite FTS5 by
-default) can be swapped for another one - Tantivy, or eventually
-Lucene/Elasticsearch - without touching callers.
-"""
-
 import sqlite3
 from typing import TYPE_CHECKING, Protocol
 
@@ -29,12 +23,6 @@ class SparseRetriever(Protocol):
 
 
 class SparseBackend(Protocol):
-    """`SparseRetriever` plus the indexing half of the same engine, so
-    `RetrievalService.ingest()` can delegate to whichever backend was
-    injected at construction instead of hardcoding SQLite FTS5 (see
-    `api/service.py`).
-    """
-
     def index_units(self, content: str, units: list[RetrievalUnit]) -> None: ...
 
     async def search(
@@ -89,20 +77,6 @@ class SqliteSparseRetriever:
 
 
 class TantivySparseRetriever:
-    """Alternate `SparseBackend` implementation (see `indexes/sparse_tantivy.py`
-    for why this exists). Still needs `conn` - the structural document/node
-    tree (outline, page numbers) is unaffected by which engine ranks
-    full-text search results, so it stays in SQLite either way.
-
-    `indexes.sparse_tantivy` (and the `tantivy` package it wraps) is imported
-    lazily, here in `__init__`, not at module level - `tantivy` is an
-    optional extra (`pip install ".[tantivy]"`), and this module is imported
-    by `api/service.py`, which every caller of the deterministic retrieval
-    layer imports regardless of which sparse backend they use. A
-    module-level import would make `tantivy` a hard dependency for
-    everyone.
-    """
-
     def __init__(self, conn: sqlite3.Connection) -> None:
         from longdoc_retrieval.indexes import sparse_tantivy
 

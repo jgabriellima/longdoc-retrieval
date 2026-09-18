@@ -1,9 +1,3 @@
-"""evaluate_candidates node: one batched LLM call over all fused candidates'
-previews - never full node text, and never one call per candidate. Judging
-which candidates are worth reading should be cheap even when a search
-round turns up dozens of hits.
-"""
-
 from typing import Any
 
 from pydantic import BaseModel
@@ -61,11 +55,6 @@ def evaluate_candidates_node(llm: StructuredLLM, config: RetrievalConfig) -> Nod
 
         try:
             result = await llm.invoke(prompt, _EvaluationBatch)
-            # Defend against a hallucinated/partial response: only trust
-            # evaluations for candidate_ids that actually exist in this
-            # batch, and backfill anything the model skipped - invalid or
-            # incomplete model output must not propagate downstream, even
-            # when the call itself "succeeded".
             evaluated = [e for e in result.value.evaluations if e.candidate_id in input_ids]
             covered = {e.candidate_id for e in evaluated}
             evaluated.extend(_fallback_missing(input_ids, covered))
@@ -77,10 +66,6 @@ def evaluate_candidates_node(llm: StructuredLLM, config: RetrievalConfig) -> Nod
                 }
             )
         except StructuredOutputError:
-            # Conservative fallback: mark everything should_read=True up to
-            # the evidence budget (enforced downstream by reader.py) rather
-            # than silently dropping candidates - a flaky evaluator call
-            # degrades retrieval breadth/cost, not correctness.
             evaluated = [
                 EvaluatedCandidate(
                     candidate_id=c.candidate_id,

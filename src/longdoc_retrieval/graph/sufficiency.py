@@ -1,31 +1,3 @@
-"""evaluate_sufficiency + refine_strategy nodes: decide whether the
-evidence gathered so far answers the question, and if not, what to search
-for next.
-
-`should_stop` (budgets.py) is invoked exactly once per cycle, here, against
-a merged view of the state as it will look after this node's own update -
-so the `stop_reason` this node returns and the routing decision `router.py`
-makes from that same value can never disagree (one source of truth for
-every stop condition).
-
-Design history (kept because the reasoning matters for future changes):
-a holistic "sufficient=true/false" call was replaced by per-evidence
-extraction (does THIS item answer, quote it or null), which was replaced by
-THIS module's current design: per-evidence extraction issued as SEPARATE,
-ISOLATED LLM calls (one per evidence item, running in parallel), not one
-shared call asked to judge each item "in isolation". A live evaluation
-showed that instructing the model to judge items independently inside one
-shared prompt was not reliable - contradiction-noise from an unrelated
-evidence item in the SAME prompt kept suppressing the excerpt for a
-different item that, on its own, clearly answered the question (confirmed
-by reading the model's own stated relevance_reason for that item). Making
-each item's extraction call structurally unable to see the other items as
-"things to be suspicious of" (while still giving it their text as
-resolvable "supporting context", so cross-references like a role-label
-defined elsewhere still work) removes the contamination channel rather
-than asking the model not to use it.
-"""
-
 import asyncio
 from typing import Any
 
@@ -40,11 +12,6 @@ from longdoc_retrieval.graph.llm import StructuredLLM, StructuredOutputError
 from longdoc_retrieval.graph.state import RetrievalState
 from longdoc_retrieval.graph.types import Node
 
-# Documents often define a role label for a party once, then refer to it
-# only by that label - the exact labels vary by document type (no fixed
-# list), so this describes the PATTERN rather than naming specific terms
-# (an earlier version named "CONCEDENTE"/"CONVENENTE" explicitly, which
-# fixed one document's vocabulary but taught nothing about the next one).
 _ROLE_LABEL_NOTE = (
     "Documentos administrativos e contratuais costumam definir, uma unica "
     "vez em algum ponto do texto, um rotulo generico para cada parte "
@@ -62,29 +29,10 @@ _ROLE_LABEL_NOTE = (
 
 
 class _PrimaryExtraction(BaseModel):
-    """Extraction scoped to ONE evidence item ("EVIDENCIA PRINCIPAL" in the
-    prompt): copy the literal substring of THAT item that answers the
-    question, or null. Verified as a real substring in code (never trusted
-    blindly) - the actual anti-fabrication guarantee.
-    """
-
     answer_excerpt: str | None = None
 
 
 class _BatchSignal(BaseModel):
-    """The batch-signal call sees ALL evidence at once, mainly to report
-    missing_information/contradictions/recommended_queries (which genuinely
-    benefit from cross-evidence context). `answer_excerpt` is a second,
-    independent extraction attempt piggy-backed onto this same call (no
-    extra API cost): a live evaluation showed a case where every isolated
-    per-evidence extraction (see _PrimaryExtraction) returned null for the
-    SAME iteration, yet this batch call's own `contradictions` text
-    explicitly said the isolated result was wrong and quoted the correct
-    value itself - the holistic view caught what the isolated view missed
-    that one time. Verified as a real substring in code (never trusted
-    blindly), exactly like _PrimaryExtraction.
-    """
-
     answer_excerpt: str | None = None
     missing_information: list[str] = Field(default_factory=list)
     contradictions: list[str] = Field(default_factory=list)
@@ -237,10 +185,6 @@ def evaluate_sufficiency_node(llm: StructuredLLM, config: RetrievalConfig) -> No
                     + batch_output,
                 }
             )
-            # Second, independent extraction path (see _BatchSignal's
-            # docstring): the excerpt must be a real substring of SOME
-            # evidence item, checked here rather than trusted from the
-            # model's own claim of which item it came from.
             if not sufficient and signal.answer_excerpt and signal.answer_excerpt.strip():
                 candidate = signal.answer_excerpt.strip()
                 sufficient = any(candidate in evidence.text for evidence in evidence_list)
@@ -279,13 +223,6 @@ def evaluate_sufficiency_node(llm: StructuredLLM, config: RetrievalConfig) -> No
 
 
 def refine_strategy_node() -> Node:
-    """No LLM call (refine_strategy feeds straight into execute_searches):
-    the next iteration's queries come straight from the last
-    SufficiencyDecision.recommended_queries, reusing the same
-    exact_terms/structural_hints rather than re-invoking the planner every
-    single loop.
-    """
-
     async def _node(state: RetrievalState) -> dict[str, Any]:
         last = state["last_sufficiency"]
         previous_plan = state["plan"]

@@ -1,8 +1,3 @@
-"""Deterministic candidate_id construction, shared by search() and
-find_exact() so candidate fusion (deduping/merging hits across queries) gets
-a stable identity key without re-deriving this format itself.
-"""
-
 import hashlib
 
 

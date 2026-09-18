@@ -1,9 +1,6 @@
-"""Response DTOs for the deterministic retrieval API. Kept out of domain/
-because nothing outside the API layer needs them - they exist purely to
-shape what `RetrievalService` returns without ever exposing full document
-text by default.
 """
-
+Schemas for the retrieval API endpoints.
+"""
 from pydantic import BaseModel
 
 from longdoc_retrieval.retrieval.reader import ReadResult

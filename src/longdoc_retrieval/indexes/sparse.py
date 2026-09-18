@@ -1,8 +1,3 @@
-"""SQLite FTS5 sparse index - own-content virtual table over retrieval
-units, BM25-ranked. The default sparse-retrieval backend (see
-indexes/sparse_tantivy.py for the alternate one).
-"""
-
 import sqlite3
 
 from longdoc_retrieval.ingestion.node_builder import RetrievalUnit
@@ -34,10 +29,6 @@ def delete_document(conn: sqlite3.Connection, document_id: str) -> None:
 
 
 def index_units(conn: sqlite3.Connection, document_text: str, units: list[RetrievalUnit]) -> None:
-    # rowid is left to SQLite's default auto-assignment: rows are matched
-    # back to `retrieval_units` by the unit_id column (see search()'s JOIN),
-    # never by rowid, so rowid uniqueness across multiple indexed documents
-    # in the same connection is not a correctness concern here.
     conn.executemany(
         "INSERT INTO retrieval_units_fts (content, unit_id, document_id) VALUES (?, ?, ?)",
         [
@@ -53,14 +44,10 @@ def index_units(conn: sqlite3.Connection, document_text: str, units: list[Retrie
 
 
 def _build_match_query(query: str) -> str | None:
-    """Tokenize and quote every term so raw user input never reaches FTS5's
-    MATCH syntax directly - unescaped `" - * :` etc. raise OperationalError.
-    """
-
     terms = [t for t in tokenize(query) if t.isalnum() or "_" in t]
     if not terms:
         return None
-    quoted = [f'"{t}"' for t in dict.fromkeys(terms)]  # de-dup, preserve order
+    quoted = [f'"{t}"' for t in dict.fromkeys(terms)]
     return " OR ".join(quoted)
 
 
@@ -111,9 +98,6 @@ def search(conn: sqlite3.Connection, document_id: str, query: str, limit: int) -
     except sqlite3.OperationalError:
         return []
 
-    # SQLite's bm25() is negative-is-better; negate so higher = more
-    # relevant, matching RetrievalCandidate.lexical_score's documented
-    # convention.
     return [
         SparseHit(
             unit_id=row["unit_id"],

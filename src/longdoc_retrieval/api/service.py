@@ -1,14 +1,6 @@
-"""RetrievalService: the deterministic retrieval API's 7 methods
-(document_outline, search, find_exact, inspect_node, expand_node, read_node,
-read_range), as an async facade over the ingestion/index/retrieval layers.
-
-Methods are `async def` to match the SparseRetriever Protocol convention,
-but the SQLite calls underneath are synchronous - ops here are ms-scale,
-and concurrent fan-out across queries is the agentic loop's concern
-(graph/search.py), not this layer's. `document_id` scoping is trusted, not
-authorized, by this layer - callers must have already checked access.
 """
-
+Service for the retrieval API endpoints.
+"""
 import sqlite3
 
 from longdoc_retrieval.api.schemas import DocumentOutline, DocumentRecord, NodeSummary, OutlineNode

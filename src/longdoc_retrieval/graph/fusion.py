@@ -1,10 +1,3 @@
-"""merge_candidates node: normalize identity, remove duplicate ranges,
-combine overlapping ranges, preserve provenance/scores, and prioritize
-diversity across sections rather than a flat global top-K - ten passages
-from the same paragraph are usually less useful than evidence distributed
-across multiple sections of the document.
-"""
-
 from collections import defaultdict
 from typing import Any
 
@@ -14,9 +7,6 @@ from longdoc_retrieval.domain.retrieval import RetrievalCandidate
 from longdoc_retrieval.graph.state import RetrievalState
 from longdoc_retrieval.graph.types import Node
 
-# Higher wins when two candidates' ranges overlap and must be merged into
-# one - exact matches are the most precise signal, sparse/structural next,
-# expanded (already-read) candidates last.
 _METHOD_PRIORITY = {"exact": 3, "structural": 2, "sparse": 1, "expanded": 0}
 
 
@@ -49,9 +39,6 @@ def merge_overlapping_ranges(candidates: list[RetrievalCandidate]) -> list[Retri
                 candidate_priority = _METHOD_PRIORITY[candidate.retrieval_method]
                 winner = current if current_priority >= candidate_priority else candidate
                 if current_priority == candidate_priority:
-                    # Same method (e.g. two sparse hits overlapping) - no
-                    # higher-fidelity span to prefer, so keep the union as
-                    # before.
                     current = winner.model_copy(
                         update={
                             "start_offset": min(current.start_offset, candidate.start_offset),
@@ -60,11 +47,6 @@ def merge_overlapping_ranges(candidates: list[RetrievalCandidate]) -> list[Retri
                         }
                     )
                 else:
-                    # Different methods - keep the higher-priority
-                    # candidate's own (tighter) span rather than widening it
-                    # to the lower-priority one's: a precise exact/structural
-                    # match shouldn't balloon back out to a whole sparse
-                    # retrieval unit's range just because the two overlap.
                     current = winner
             else:
                 merged.append(current)

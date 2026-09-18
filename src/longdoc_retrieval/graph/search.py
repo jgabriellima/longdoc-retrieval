@@ -1,8 +1,3 @@
-"""execute_searches node: independent sparse/exact searches run concurrently
-via asyncio.gather - for a batch of independent queries, there's no reason
-to run them one after another when nothing depends on the previous result.
-"""
-
 import asyncio
 import time
 from typing import Any
@@ -18,11 +13,6 @@ def execute_searches_node(service: RetrievalService, config: RetrievalConfig) ->
         plan = state["plan"]
         document_id = state["document_id"]
 
-        # `concepts` are searched too, not just `queries`: a query phrased
-        # to match the question's own wording can miss a clause phrased
-        # differently (observed: "valor total" never matched "O valor [...]
-        # totaliza R$ 520.861,60" via BM25) - concepts give the sparse index
-        # more lexical variety to match against without an extra iteration.
         combined = (
             [("sparse", q) for q in (plan.queries if plan else [])]
             + [("sparse", c) for c in (plan.concepts if plan else [])]

@@ -1,10 +1,3 @@
-"""SQLite-backed structural storage: documents, nodes, retrieval_units.
-
-One connection can hold many documents (all tables are document_id-scoped);
-this layer has no cross-tenant authorization logic - callers are trusted to
-have already authorized `document_id` before calling in.
-"""
-
 import json
 import sqlite3
 from dataclasses import dataclass
@@ -190,11 +183,6 @@ def get_all_nodes(conn: sqlite3.Connection, document_id: str) -> list[DocumentNo
 
 
 def get_top_level_ancestor(conn: sqlite3.Connection, document_id: str, node_id: str) -> str:
-    """Walk the parent_id chain up to the depth-1 ancestor (or the node
-    itself if already at depth <= 1). Used by candidate fusion's
-    diversity-across-sections bucketing.
-    """
-
     current = get_node(conn, document_id, node_id)
     if current is None:
         return node_id
@@ -207,8 +195,6 @@ def get_top_level_ancestor(conn: sqlite3.Connection, document_id: str, node_id: 
 
 
 def resolve_node_at_offset(conn: sqlite3.Connection, document_id: str, offset: int) -> str | None:
-    """Deepest node whose span contains `offset`."""
-
     row = conn.execute(
         """
         SELECT node_id FROM nodes
@@ -289,5 +275,3 @@ def delete_document(conn: sqlite3.Connection, document_id: str) -> None:
     conn.execute("DELETE FROM nodes WHERE document_id = ?", (document_id,))
     conn.execute("DELETE FROM documents WHERE document_id = ?", (document_id,))
     conn.commit()
-
-

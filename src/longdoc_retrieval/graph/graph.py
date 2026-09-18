@@ -1,17 +1,3 @@
-"""Wires the retrieval graph's topology:
-
-START -> understand_request -> plan_retrieval -> execute_searches ->
-merge_candidates -> evaluate_candidates -> read_evidence ->
-update_evidence_ledger -> evaluate_sufficiency -> [sufficient: build_evidence_package -> synthesize_answer -> END]
-                                                -> [insufficient: refine_strategy -> execute_searches]
-
-`checkpointer` is caller-supplied, not baked in: `run.py` passes a
-per-invocation `MemorySaver` (thread_id = request_id) so each call is
-isolated; a production deployment serving many concurrent requests would
-instead pass a persistent, shared checkpointer here - that choice belongs
-to the caller, not to this module.
-"""
-
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
@@ -39,12 +25,6 @@ def build_retrieval_graph(
 ) -> CompiledStateGraph:
     builder = StateGraph(RetrievalState, input_schema=RetrievalInput, output_schema=RetrievalOutput)
 
-    # Every node below is `Callable[[RetrievalState], Awaitable[dict[str,
-    # Any]]]` (graph/types.py::Node) - a plain partial-update function,
-    # which is the standard LangGraph node shape but doesn't match any
-    # single member of add_node's elaborate generic overload set closely
-    # enough for mypy to pick one. Runtime behavior is unaffected (verified
-    # by the full test suite, incl. the compiled-graph integration tests).
     builder.add_node("understand_request", understand_request_node(service))  # type: ignore[call-overload]
     builder.add_node("plan_retrieval", plan_retrieval_node(llm_clients.planner, config))  # type: ignore[call-overload]
     builder.add_node("execute_searches", execute_searches_node(service, config))  # type: ignore[call-overload]

@@ -1,8 +1,3 @@
-"""Conditional edge after evaluate_sufficiency. Reads `stop_reason`, which
-`evaluate_sufficiency_node` already computed via `should_stop` - the router
-never re-derives the stop decision itself.
-"""
-
 from typing import Literal
 
 from longdoc_retrieval.graph.state import RetrievalState

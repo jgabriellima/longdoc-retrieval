@@ -1,8 +1,3 @@
-"""should_stop(): a single, pure source of truth for every stop condition,
-so `router.py` (which decides whether to loop) and `package.py` (which
-reports `stop_reason`) can never disagree.
-"""
-
 import time
 
 from longdoc_retrieval.config import RetrievalConfig

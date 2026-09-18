@@ -1,5 +1,3 @@
-"""Single connection factory composing the structural + sparse (FTS5) schemas."""
-
 import sqlite3
 
 from longdoc_retrieval.indexes import sparse, structural

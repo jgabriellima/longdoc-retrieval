@@ -1,8 +1,3 @@
-"""Ingestion orchestration: normalize -> parse structure -> build nodes ->
-build retrieval units -> persist to the structural + sparse indexes. No LLM
-call anywhere in this path - ingestion is deterministic.
-"""
-
 import sqlite3
 from typing import TYPE_CHECKING
 
